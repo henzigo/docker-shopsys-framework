@@ -1,8 +1,6 @@
 FROM php:7.3-fpm-stretch as base
 
 ARG project_root=.
-ENV REDIS_PREFIX=''
-ENV ELASTIC_SEARCH_INDEX_PREFIX=''
 
 # install required tools
 # git for computing diffs
@@ -30,13 +28,18 @@ RUN chmod +x /usr/local/bin/docker-install-composer && \
 # libicu-dev for intl extension
 # libpg-dev for connection to postgres database
 # autoconf needed by "redis" extension
-RUN apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
     libicu-dev \
     libpq-dev \
+    vim \
+    nano \
+    mc \
+    htop \
     autoconf && \
     apt-get clean
 
@@ -46,6 +49,8 @@ RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-di
 # install necessary tools for running application
 RUN docker-php-ext-install \
     bcmath \
+    calendar \
+    fileinfo \
     gd \
     intl \
     opcache \
@@ -59,7 +64,7 @@ RUN npm install -g grunt-cli
 # install PostgreSQl client for dumping database
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
     sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -sc)-pgdg main" > /etc/apt/sources.list.d/PostgreSQL.list' && \
-    apt-get update && apt-get install -y postgresql-10 postgresql-client-10 && apt-get clean
+    apt-get update && apt-get install -y postgresql-12 postgresql-client-12 && apt-get clean
 
 # install redis extension
 RUN pecl install redis-4.1.1 && \
@@ -88,6 +93,9 @@ RUN usermod -m -d /home/www-data www-data && \
 
 # Switch to user
 USER www-data
+
+RUN mkdir /home/www-data/.npm-global
+ENV NPM_CONFIG_PREFIX /home/www-data/.npm-global
 
 # hirak/prestissimo makes the install of Composer dependencies faster by parallel downloading
 RUN composer global require hirak/prestissimo
