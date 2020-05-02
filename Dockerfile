@@ -1,8 +1,6 @@
 FROM php:7.3-fpm-stretch as base
 
 ARG project_root=.
-ENV REDIS_PREFIX=''
-ENV ELASTIC_SEARCH_INDEX_PREFIX=''
 
 # install required tools
 # git for computing diffs
@@ -30,13 +28,19 @@ RUN chmod +x /usr/local/bin/docker-install-composer && \
 # libicu-dev for intl extension
 # libpg-dev for connection to postgres database
 # autoconf needed by "redis" extension
-RUN apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
     libicu-dev \
     libpq-dev \
+    fontforge \
+    vim \
+    nano \
+    mc \
+    htop \
     autoconf && \
     apt-get clean
 
@@ -51,7 +55,11 @@ RUN docker-php-ext-install \
     opcache \
     pgsql \
     pdo_pgsql \
-    zip
+    zip \
+    calendar
+
+# hotfix for https://github.com/npm/cli/issues/613
+RUN npm install -g npm@6.13.2
 
 # install grunt cli used by frontend developers for continuous generating of css files
 RUN npm install -g grunt-cli
@@ -59,7 +67,7 @@ RUN npm install -g grunt-cli
 # install PostgreSQl client for dumping database
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
     sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -sc)-pgdg main" > /etc/apt/sources.list.d/PostgreSQL.list' && \
-    apt-get update && apt-get install -y postgresql-10 postgresql-client-10 && apt-get clean
+    apt-get update && apt-get install -y postgresql-12 postgresql-client-12 && apt-get clean
 
 # install redis extension
 RUN pecl install redis-4.1.1 && \
