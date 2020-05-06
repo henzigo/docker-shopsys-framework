@@ -36,13 +36,11 @@ RUN apt-get update && \
     libzip-dev \
     libicu-dev \
     libpq-dev \
-    fontforge \
+    autoconf \
     vim \
     nano \
-    mc \
     htop \
-    autoconf && \
-    apt-get clean
+    mc
 
 # "gd" extension needs to have specified jpeg and freetype dir for jpg/jpeg images support
 RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
@@ -50,13 +48,14 @@ RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-di
 # install necessary tools for running application
 RUN docker-php-ext-install \
     bcmath \
+    calendar \
     gd \
     intl \
     opcache \
     pgsql \
     pdo_pgsql \
-    zip \
-    calendar
+    pdo_mysql    \
+    zip
 
 # hotfix for https://github.com/npm/cli/issues/613
 RUN npm install -g npm@6.13.2
