@@ -30,6 +30,7 @@ RUN chmod +x /usr/local/bin/docker-install-composer && \
 # autoconf needed by "redis" extension
 RUN apt-get update && \
     apt-get install -y \
+    bash-completion \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
@@ -43,7 +44,6 @@ RUN apt-get update && \
     autoconf && \
     apt-get clean
 
-# "gd" extension needs to have specified jpeg and freetype dir for jpg/jpeg images support
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 
 # install necessary tools for running application
@@ -57,9 +57,6 @@ RUN docker-php-ext-install \
     pgsql \
     pdo_pgsql \
     zip
-
-# install grunt cli used by frontend developers for continuous generating of css files
-RUN npm install -g grunt-cli
 
 # install PostgreSQl client for dumping database
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
@@ -81,6 +78,9 @@ ENV LC_ALL en_US.UTF-8
 # copy php.ini configuration
 COPY ${project_root}/php-ini-overrides.ini /usr/local/etc/php/php.ini
 
+# add bash completion for phing
+COPY ${project_root}/phing-completion /etc/bash_completion.d/phing
+
 # overwrite the original entry-point from the PHP Docker image with our own
 COPY ${project_root}/docker-php-entrypoint /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-php-entrypoint
@@ -94,8 +94,11 @@ RUN usermod -m -d /home/www-data www-data && \
 # Switch to user
 USER www-data
 
-RUN mkdir /home/www-data/.npm-global
-ENV NPM_CONFIG_PREFIX /home/www-data/.npm-global
+# enable bash completion
+RUN echo "source /etc/bash_completion" >> ~/.bashrc
+
+RUN mkdir -p /var/www/html/.npm-global
+ENV NPM_CONFIG_PREFIX /var/www/html/.npm-global
 
 # hirak/prestissimo makes the install of Composer dependencies faster by parallel downloading
 RUN composer global require hirak/prestissimo
